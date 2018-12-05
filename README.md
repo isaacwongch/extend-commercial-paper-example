@@ -4,6 +4,8 @@
 
 The aim of this project is to walk you through every little step in creating a realistic fabric network, with reference to the existing commercial paper sample in fabric-sample.
 
+## Project Structure
+
 ## An In-Depth Look on configtx.yaml
 
 In the PaperNet network, we define a consortium called PapernetConsortium which includes three organizations -- DigiBank, MangetoCorp and HedgeMatic. On the other hand, we have another organization called MiddleBank to be the orderer organization. Note that MiddleBank is not part of the consortium, this serves act as an indepedant unit that will not participate in any transactions.
