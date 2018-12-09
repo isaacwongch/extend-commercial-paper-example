@@ -1,0 +1,26 @@
+version: '2'
+
+networks:
+  papernet:
+
+services:
+  # Orderer (Solo)
+  middlebank.papernet.com:
+    container_name: middlebank.papernet.com
+    image: hyperledger/fabric-orderer
+    environment:
+      - ORDERER_GENERAL_LOGLEVEL=info
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/configtx/genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=MiddleBankMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/msp/orderer/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/orderer
+    command: orderer
+    ports:
+      - 7050:7050
+    volumes:
+        - ./../channel-artifacts/:/etc/hyperledger/configtx
+        - ../identity/orderers/middlebank.papernet.com/:/etc/hyperledger/msp/orderer
+    networks:
+      - papernet

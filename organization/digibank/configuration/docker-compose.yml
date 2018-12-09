@@ -17,12 +17,12 @@ services:
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
       - FABRIC_CA_SERVER_CA_NAME=ca.digibank.papernet.com
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.digibank.papernet.com-cert.pem
-      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/f74d0a4812018e977d356df93b17d9348b64ce7e1c9f38099229c72dc78400ff_sk
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/1f711fd59773ab0c68f3263aad367aca53fa62c6cbc1690c04494ec70eb05980_sk
     ports:
-      - "8054:7054"
+      - "7054:7054"
     command: sh -c 'fabric-ca-server start -b admin:adminpw'
     volumes:
-      - ./crypto-config/peerOrganizations/digibank.papernet.com/ca/:/etc/hyperledger/fabric-ca-server-config
+      - ./../identity/ca/:/etc/hyperledger/fabric-ca-server-config
     networks:
       - papernet
 
@@ -58,11 +58,10 @@ services:
       - 7053:7053
     volumes:
         - /var/run/:/host/var/run/
-        - ./crypto-config/peerOrganizations/digibank.papernet.com/peers/peer0.digibank.papernet.com/msp:/etc/hyperledger/msp/peer
-        - ./crypto-config/peerOrganizations/digibank.papernet.com/users:/etc/hyperledger/msp/users
+        - ./../identity/peers/peer0.digibank.papernet.com/msp:/etc/hyperledger/msp/peer
+        - ./../identity/users:/etc/hyperledger/msp/users
         - ./config:/etc/hyperledger/configtx
     depends_on:
-      - middlebank.papernet.com
       - peer0.digibank.couchdb
     networks:
       - papernet
@@ -111,11 +110,10 @@ services:
       - 8053:7053
     volumes:
         - /var/run/:/host/var/run/
-        - ./crypto-config/peerOrganizations/digibank.papernet.com/peers/peer1.digibank.papernet.com/msp:/etc/hyperledger/msp/peer
-        - ./crypto-config/peerOrganizations/digibank.papernet.com/users:/etc/hyperledger/msp/users
+        - ./../identity/peers/peer1.digibank.papernet.com/msp:/etc/hyperledger/msp/peer
+        - ./../identity/users:/etc/hyperledger/msp/users
         - ./config:/etc/hyperledger/configtx
     depends_on:
-      - middlebank.papernet.com
       - peer1.digibank.couchdb
     networks:
       - papernet
@@ -130,5 +128,57 @@ services:
       - COUCHDB_PASSWORD=
     ports:
       - 6984:5984
+    networks:
+      - papernet
+
+  peer2.digibank.papernet.com:
+    container_name: peer2.digibank.papernet.com
+    image: hyperledger/fabric-peer
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_PEER_ID=peer2.digibank.papernet.com
+      - CORE_LOGGING_PEER=debug
+      - CORE_CHAINCODE_LOGGING_LEVEL=debug
+      - CORE_PEER_LOCALMSPID=DigiBankMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/peer/
+      - CORE_PEER_ADDRESS=peer2.digibank.papernet.com:7051
+      # # the following setting starts chaincode containers on the same
+      # # bridge network as the peers
+      # # https://docs.docker.com/compose/networking/
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=${COMPOSE_PROJECT_NAME}_papernet
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=peer2.digibank.couchdb:5984
+      # The CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME and CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD
+      # provide the credentials for ledger to connect to CouchDB.  The username and password must
+      # match the username and password set for the associated CouchDB.
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: peer node start --peer-chaincodedev=true
+    # command: peer node start --peer-chaincodedev=true
+    ports:
+      - 9051:7051
+      - 9052:7052
+      - 9053:7053
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./../identity/peers/peer2.digibank.papernet.com/msp:/etc/hyperledger/msp/peer
+        - ./../identity/users:/etc/hyperledger/msp/users
+        - ./config:/etc/hyperledger/configtx
+    depends_on:
+      - peer2.digibank.couchdb
+    networks:
+      - papernet
+
+  peer2.digibank.couchdb:
+    container_name: peer2.digibank.couchdb
+    image: hyperledger/fabric-couchdb
+    # Populate the COUCHDB_USER and COUCHDB_PASSWORD to set an admin user and password
+    # for CouchDB.  This will prevent CouchDB from operating in an "Admin Party" mode.
+    environment:
+      - COUCHDB_USER=
+      - COUCHDB_PASSWORD=
+    ports:
+      - 7984:5984
     networks:
       - papernet
